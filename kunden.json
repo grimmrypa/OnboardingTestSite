@@ -1,0 +1,39 @@
+{
+  "Musterfirma GmbH": {
+    "pflichtapps": [
+      "Securepoint SSL VPN",
+      "NinjaOne",
+      "SentinelOne",
+      "Adobe Acrobat Reader",
+      "M365 + Outlook"
+    ],
+    "optionalapps": [
+      "Mailstore + Mailstore Outlook Add-in",
+      "3CX",
+      "Yealink USB-Connect"
+    ],
+    "zugaenge": [
+      "VPN",
+      "E-Mail",
+      "Mailstore",
+      "Domäne",
+      "3CX"
+    ]
+  },
+  "Test AG": {
+    "pflichtapps": [
+      "NinjaOne",
+      "SentinelOne",
+      "M365 + Outlook"
+    ],
+    "optionalapps": [
+      "SFirm",
+      "Doorbell"
+    ],
+    "zugaenge": [
+      "VPN",
+      "E-Mail",
+      "Domäne"
+    ]
+  }
+}
