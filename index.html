@@ -1302,7 +1302,7 @@ function getLaufwerke() {
 // GENERATE CHECKLIST
 // ==============================
 function generateChecklist() {
-  const firma = document.getElementById('firma').value || '—';
+  const firma = document.getElementById('back-bar-firma-name').textContent || '—';
   const auftraggeber = document.getElementById('auftraggeber').value || '—';
   const mandantName = document.getElementById('mandant-name').value || '—';
   const mandantAbt = document.getElementById('mandant-abteilung').value || '—';
