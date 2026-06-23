@@ -17,12 +17,12 @@
     --text: #2D2D2D;
     --text-muted: #555555;
     --text-faint: #9E9E9E;
-    --accent: #54B435;
+    --accent: #3D8A27;
     --accent-light: #F0FDE9;
-    --accent-mid: #419425;
+    --accent-mid: #2E6B1C;
     --danger: #C62828;
     --danger-light: #FFEBEE;
-    --success: #54B435;
+    --success: #3D8A27;
     --success-light: #F0FDE9;
     --warning: #E65100;
     --warning-light: #FFF3E0;
@@ -41,12 +41,12 @@
     --text: #F0F0F0;
     --text-muted: #AAAAAA;
     --text-faint: #666666;
-    --accent: #54B435;
+    --accent: #3D8A27;
     --accent-light: #1A2E14;
-    --accent-mid: #6DD44A;
+    --accent-mid: #4CAF30;
     --danger: #EF5350;
     --danger-light: #2C1A1A;
-    --success: #54B435;
+    --success: #3D8A27;
     --success-light: #1A2E14;
     --warning: #FFA726;
     --warning-light: #2C2010;
@@ -971,6 +971,7 @@
         <button class="tab-btn" onclick="switchTab('tab-optional')">Optionale Apps</button>
         <button class="tab-btn" onclick="switchTab('tab-browser')">Browser</button>
         <button class="tab-btn" onclick="switchTab('tab-zugaenge')">Zugänge</button>
+        <button class="tab-btn" onclick="switchTab('tab-hudu')">Hudu</button>
       </div>
 
       <div id="tab-pflicht" class="tab-panel active">
@@ -1006,6 +1007,26 @@
         <button class="btn-add" style="margin-top:8px" onclick="addSettingsItem('zugaenge')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Zugang hinzufügen
+        </button>
+      </div>
+      <div id="tab-hudu" class="tab-panel">
+        <p class="text-muted" style="margin-bottom:12px">Hudu-Zugangsdaten werden lokal im Browser gespeichert (localStorage) – nie in der kunden.json.</p>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label>Hudu-URL</label>
+          <input type="text" id="hudu-url-input" placeholder="https://deine-instanz.huducloud.com">
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label>API-Key</label>
+          <input type="password" id="hudu-key-input" placeholder="API-Key aus Hudu Admin → API Keys">
+        </div>
+        <div class="form-group">
+          <label>Prozess-Vorlage ID <span style="font-weight:400;text-transform:none;font-size:11px">(optional – leer lassen für freien Prozess)</span></label>
+          <input type="text" id="hudu-template-input" placeholder="z.B. 42">
+        </div>
+        <div id="hudu-test-result" style="margin-top:10px;font-size:13px;display:none"></div>
+        <button class="btn-add" style="margin-top:12px" onclick="testHuduConnection()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          Verbindung testen
         </button>
       </div>
     </div>
@@ -1474,6 +1495,9 @@ function generateChecklist() {
   wrap.style.display = 'block';
   wrap.classList.add('open');
   setTimeout(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+
+  // Hudu: Prozess anlegen (nur wenn konfiguriert)
+  pushToHudu(firma, auftraggeber, mandantName, allApps, optApps, zugaengeSelected, laufwerke);
 }
 
 // ==============================
@@ -1509,6 +1533,7 @@ function openSettingsModal() {
   renderSettingsList('optional', config.optionalapps);
   renderSettingsList('browser', config.browser);
   renderSettingsList('zugaenge', config.zugaenge);
+  loadHuduConfigToForm();
   document.getElementById('settings-modal').classList.add('open');
 }
 
@@ -1517,6 +1542,7 @@ function closeSettings() {
 }
 
 function saveSettings() {
+  saveHuduConfig();
   config.pflichtapps = getSettingsValues('pflicht');
   config.optionalapps = getSettingsValues('optional');
   config.browser = getSettingsValues('browser');
@@ -1576,6 +1602,130 @@ function esc(str) {
 }
 function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]/g, '-');
+}
+
+// ==============================
+// HUDU INTEGRATION
+// ==============================
+function getHuduConfig() {
+  return {
+    url:      (localStorage.getItem('hudu_url')      || '').replace(/\/$/, ''),
+    key:      localStorage.getItem('hudu_key')       || '',
+    template: localStorage.getItem('hudu_template')  || ''
+  };
+}
+
+function saveHuduConfig() {
+  const url      = document.getElementById('hudu-url-input')?.value.trim()     || '';
+  const key      = document.getElementById('hudu-key-input')?.value.trim()     || '';
+  const template = document.getElementById('hudu-template-input')?.value.trim()|| '';
+  if (url) localStorage.setItem('hudu_url', url);
+  if (key) localStorage.setItem('hudu_key', key);
+  localStorage.setItem('hudu_template', template);
+}
+
+function loadHuduConfigToForm() {
+  const cfg = getHuduConfig();
+  const urlEl = document.getElementById('hudu-url-input');
+  const keyEl = document.getElementById('hudu-key-input');
+  const tplEl = document.getElementById('hudu-template-input');
+  if (urlEl) urlEl.value = cfg.url;
+  if (keyEl) keyEl.value = cfg.key;
+  if (tplEl) tplEl.value = cfg.template;
+}
+
+async function testHuduConnection() {
+  const cfg = getHuduConfig();
+  const el = document.getElementById('hudu-test-result');
+  if (!cfg.url || !cfg.key) {
+    el.style.display = 'block';
+    el.style.color = 'var(--danger)';
+    el.textContent = '⚠ Bitte URL und API-Key eingeben.';
+    return;
+  }
+  el.style.display = 'block';
+  el.style.color = 'var(--text-muted)';
+  el.textContent = 'Verbinde…';
+  try {
+    const r = await fetch(`${cfg.url}/api/v1/companies?page_size=1`, {
+      headers: { 'x-api-key': cfg.key, 'Content-Type': 'application/json' }
+    });
+    if (r.ok) {
+      el.style.color = 'var(--success)';
+      el.textContent = '✓ Verbindung erfolgreich!';
+    } else {
+      el.style.color = 'var(--danger)';
+      el.textContent = `✗ Fehler ${r.status} – API-Key oder URL prüfen.`;
+    }
+  } catch(e) {
+    el.style.color = 'var(--danger)';
+    el.textContent = '✗ Verbindung fehlgeschlagen – CORS oder URL prüfen.';
+  }
+}
+
+async function pushToHudu(firma, auftraggeber, mandant, pflichtapps, optapps, zugaenge, laufwerke) {
+  const cfg = getHuduConfig();
+  if (!cfg.url || !cfg.key) return; // nicht konfiguriert – still skippen
+
+  // Hudu company_id aus firmenConfig lesen
+  const fc = firmenConfig[firma];
+  const companyId = fc?.hudu_company_id;
+  if (!companyId) return; // keine ID hinterlegt – still skippen
+
+  // Prozess-Schritte aus den Checklistenpunkten bauen
+  const steps = [];
+  pflichtapps.forEach(a  => steps.push({ name: a, completed: false }));
+  optapps.forEach(a      => steps.push({ name: a, completed: false }));
+  zugaenge.forEach(z     => steps.push({ name: z.name + (z.comment ? ` (${z.comment})` : ''), completed: false }));
+  laufwerke.forEach(l    => steps.push({ name: `Laufwerk ${l.buchstabe} – ${l.name}`, completed: false }));
+  steps.push({ name: 'Funktionstest aller Applikationen', completed: false });
+  steps.push({ name: 'Domänenanmeldung getestet', completed: false });
+  steps.push({ name: 'Übergabegespräch durchgeführt', completed: false });
+
+  const datum = new Date().toLocaleDateString('de-DE');
+  const body = {
+    process: {
+      name:       `Onboarding ${mandant} – ${firma} (${datum})`,
+      company_id: companyId,
+      ...(cfg.template ? { process_template_id: parseInt(cfg.template) } : {}),
+      checklist_items_attributes: steps.map((s, i) => ({
+        name:      s.name,
+        position:  i + 1,
+        completed: false
+      }))
+    }
+  };
+
+  try {
+    const r = await fetch(`${cfg.url}/api/v1/processes`, {
+      method: 'POST',
+      headers: { 'x-api-key': cfg.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (r.ok) {
+      const data = await r.json();
+      // Kleiner Toast-Hinweis
+      showToast(`✓ Hudu-Prozess angelegt: ${data.process?.name || 'OK'}`);
+    } else {
+      console.warn('Hudu push failed:', r.status, await r.text());
+    }
+  } catch(e) {
+    console.warn('Hudu push error:', e);
+  }
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('hudu-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'hudu-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#2D2D2D;color:white;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
 }
 
 // ==============================
