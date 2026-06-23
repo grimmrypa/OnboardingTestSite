@@ -36,4 +36,21 @@
       "Domäne"
     ]
   }
+  "Testv2": {
+    "pflichtapps": [
+      "NinjaOne",
+      "SentinelOne",
+      "M365 + Outlook",
+      "Hudu"
+    ],
+    "optionalapps": [
+      "SFirm",
+      "Doorbell"
+    ],
+    "zugaenge": [
+      "VPN",
+      "E-Mail",
+      "Domäne"
+    ]
+  }
 }
