@@ -32,6 +32,28 @@
     --shadow-md: 0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
   }
 
+  body.dark {
+    --bg: #1A1A1A;
+    --surface: #242424;
+    --surface2: #2D2D2D;
+    --border: #3A3A3A;
+    --border-strong: #555555;
+    --text: #F0F0F0;
+    --text-muted: #AAAAAA;
+    --text-faint: #666666;
+    --accent: #54B435;
+    --accent-light: #1A2E14;
+    --accent-mid: #6DD44A;
+    --danger: #EF5350;
+    --danger-light: #2C1A1A;
+    --success: #54B435;
+    --success-light: #1A2E14;
+    --warning: #FFA726;
+    --warning-light: #2C2010;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -687,6 +709,9 @@
     IT Onboarding
   </div>
   <div class="header-actions">
+    <button class="btn-header" onclick="toggleDark()" id="dark-toggle" title="Dark Mode">
+      <svg id="dark-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
     <button class="btn-header" onclick="openSettings()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
       Einstellungen
@@ -1442,11 +1467,13 @@ function generateChecklist() {
     </div>
   `;
 
-  document.getElementById('checklist-doc').innerHTML = html;
+  const doc = document.getElementById('checklist-doc');
   const wrap = document.getElementById('checklist-wrap');
+  if (!doc || !wrap) { alert('Fehler: Checkliste konnte nicht gerendert werden.'); return; }
+  doc.innerHTML = html;
   wrap.style.display = 'block';
   wrap.classList.add('open');
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
 // ==============================
@@ -1552,6 +1579,20 @@ function slugify(str) {
 }
 
 // ==============================
+// DARK MODE
+// ==============================
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('darkmode', isDark ? '1' : '0');
+  const icon = document.getElementById('dark-icon');
+  if (isDark) {
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  } else {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+}
+
+// ==============================
 // START
 // ==============================
 function init() {
@@ -1584,6 +1625,13 @@ fetch('kunden.json')
     init();
   })
   .catch(() => showLoadError());
+
+// Dark mode aus localStorage wiederherstellen
+if (localStorage.getItem('darkmode') === '1') {
+  document.body.classList.add('dark');
+  const icon = document.getElementById('dark-icon');
+  if (icon) icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+}
 </script>
 </body>
 </html>
