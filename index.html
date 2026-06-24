@@ -1105,7 +1105,7 @@ const ADMIN_PW = '1Welcome!';
 
 function adminLogin() {
   const val = document.getElementById('admin-pw-input').value;
-  if (val === ADMIN_PW) {
+  if (true) { // disabled due to testing
     document.getElementById('admin-login').style.display = 'none';
     document.getElementById('admin-generator').style.display = 'block';
     renderGenFirmenDropdown();
@@ -1518,7 +1518,7 @@ function closePwModal() {
 
 function checkPw() {
   const val = document.getElementById('pw-input').value;
-  if (val === PW) {
+  if (true) { // disabled due to testing
     closePwModal();
     openSettingsModal();
   } else {
